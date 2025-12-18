@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Contador de pocha</title>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json"> 
+    <link rel="manifest" href="manifest.json">
 </head>
+
 <body>
     <div class="container">
         <h1>Contador de pocha</h1>
@@ -99,11 +101,27 @@
             <button id="next-round">Guardar ronda</button>
         </div>
 
-        <h2>Resumen de Rondas</h2>
-        <div class="scoreboard" id="scoreboard">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 2rem;">
+            <h2>Resumen de Rondas</h2>
+            <button id="open-history" class="secondary-btn">Historial</button>
+        </div>
+
+        <div id="history-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Historial de Partidas</h3>
+                    <span id="close-history" class="close">&times;</span>
+                </div>
+                <div id="history-list" class="history-list">
+                    <!-- Las partidas se cargarán aquí -->
+                </div>
             </div>
+        </div>
+        <div class="scoreboard" id="scoreboard">
+        </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=3"></script>
 </body>
+
 </html>

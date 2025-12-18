@@ -1,13 +1,26 @@
+const CACHE_NAME = "pocha-cache-v3";
+const ASSETS = [
+  "/",
+  "/index.html",
+  "/style.css",
+  "/script.js",
+  "/manifest.json"
+];
+
 self.addEventListener("install", function (e) {
   e.waitUntil(
-    caches.open("pocha-cache").then(function (cache) {
-      return cache.addAll([
-        "/",
-        "/index.html",
-        "/style.css",
-        "/script.js",
-        "/manifest.json"
-      ]);
+    caches.open(CACHE_NAME).then(function (cache) {
+      return cache.addAll(ASSETS);
+    })
+  );
+});
+
+self.addEventListener("activate", function (e) {
+  e.waitUntil(
+    caches.keys().then(function (keys) {
+      return Promise.all(
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+      );
     })
   );
 });
