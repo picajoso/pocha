@@ -1,10 +1,16 @@
-const CACHE_NAME = "pocha-cache-v3";
+const CACHE_NAME = "pocha-cache-v4";
 const ASSETS = [
   "/",
   "/index.html",
   "/style.css",
   "/script.js",
-  "/manifest.json"
+  "/manifest.json",
+  "/icons/icon-192x192.png",
+  "/icons/icon-512x512.png",
+  "/icons/icon-maskable.png",
+  "/screenshots/screenshot1.png",
+  "/screenshots/screenshot2.png",
+  "/screenshots/screenshot3.png"
 ];
 
 self.addEventListener("install", function (e) {

@@ -1,12 +1,15 @@
 {
-  "id": "com.picajoso.contadorpocha",  
-  "name": "Contador Pocha",
+  "id": "com.picajoso.contadorpocha",
+  "name": "Pocha: Contador de Rondas",
   "short_name": "Pocha",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#1e4022",
   "theme_color": "#1e4022",
-  "description": "Contador para el juego de cartas Pocha.",
+  "description": "Calculadora profesional de puntuación para el juego de cartas Pocha (22 rondas).",
+  "lang": "es",
+  "orientation": "portrait",
+  "categories": ["games", "utilities"],
   "icons": [
     {
       "src": "icons/icon-192x192.png",
@@ -17,6 +20,32 @@
       "src": "icons/icon-512x512.png",
       "type": "image/png",
       "sizes": "512x512"
+    },
+    {
+      "src": "icons/icon-maskable.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/screenshot1.png",
+      "sizes": "400x800",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "screenshots/screenshot2.png",
+      "sizes": "400x800",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "screenshots/screenshot3.png",
+      "sizes": "400x800",
+      "type": "image/png",
+      "form_factor": "narrow"
     }
   ]
 }
