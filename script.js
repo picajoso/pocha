@@ -562,6 +562,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const backupArea = document.getElementById('backup-area');
     const backupText = document.getElementById('backup-text');
     const btnSaveImport = document.getElementById('btn-save-import');
+    const btnCopy = document.getElementById('btn-copy-clipboard');
     const backupStatus = document.getElementById('backup-status');
 
     if (!document.getElementById('btn-export')) return;
@@ -572,8 +573,10 @@ window.addEventListener('DOMContentLoaded', () => {
         backupArea.style.display = 'block';
         backupText.value = data;
         btnSaveImport.style.display = 'none';
-        backupStatus.innerHTML = '<strong>COPIAR:</strong> Selecciona todo el texto de arriba y cópialo.';
-        backupText.select();
+
+        if (btnCopy) btnCopy.style.display = 'block';
+
+        backupStatus.innerHTML = 'Pulsa "Copiar al Portapapeles" o selecciona el texto manualmente.';
     });
 
     document.getElementById('btn-import').addEventListener('click', () => {
@@ -581,8 +584,29 @@ window.addEventListener('DOMContentLoaded', () => {
         backupText.value = '';
         backupText.placeholder = 'Pega aquí el código copiado de la otra versión...';
         btnSaveImport.style.display = 'block';
+        if (btnCopy) btnCopy.style.display = 'none';
         backupStatus.textContent = 'Pega el texto y pulsa "Restaurar Datos".';
     });
+
+    if (btnCopy) {
+        btnCopy.addEventListener('click', () => {
+            const text = backupText.value;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    alert("¡Copiado al portapapeles!");
+                }).catch(err => {
+                    // Fallback select
+                    backupText.select();
+                    document.execCommand('copy');
+                    alert("Texto seleccionado. Si no se copió, hazlo manualmente.");
+                });
+            } else {
+                backupText.select();
+                document.execCommand('copy');
+                alert("Texto seleccionado. Cópialo manualmente.");
+            }
+        });
+    }
 
     btnSaveImport.addEventListener('click', () => {
         try {
@@ -596,8 +620,6 @@ window.addEventListener('DOMContentLoaded', () => {
             if (Array.isArray(data)) {
                 if (confirm("Se van a sobrescribir las partidas actuales con las pegadas. ¿Continuar?")) {
                     localStorage.setItem("pocha_history", JSON.stringify(data));
-                    alert("¡Datos restaurados correctamente!");
-                    location.reload();
                 }
             } else {
                 alert("Error: El formato no es válido (no es una lista).");
