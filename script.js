@@ -6,6 +6,9 @@ let cardsPerPlayer = roundCardsSequence[0];
 let dealerIndex = 0;
 let gameActive = true;
 let gameRoundsHistory = [];
+let currentVisualDealerIndex = -1;
+let chartInstance = null;
+let activeHistoryGame = null;
 
 const players = Array.from({ length: numPlayers }, (_, i) => ({
     name: '',
@@ -14,7 +17,24 @@ const players = Array.from({ length: numPlayers }, (_, i) => ({
     total: 0
 }));
 
+function reorderPlayers() {
+    if (dealerIndex === currentVisualDealerIndex) return;
+
+    const container = document.querySelector(".player-inputs");
+    const cards = Array.from(document.querySelectorAll(".player-card"));
+
+    for (let i = 0; i < numPlayers; i++) {
+        const playerIdx = (dealerIndex + 1 + i) % numPlayers;
+        const card = cards.find(c => parseInt(c.dataset.player) === playerIdx);
+        if (card) {
+            container.appendChild(card);
+        }
+    }
+    currentVisualDealerIndex = dealerIndex;
+}
+
 function updateCurrentRoundHeader() {
+    reorderPlayers();
     const dealerName = players[dealerIndex].name || `Jugador ${dealerIndex + 1}`;
     document.getElementById("current-round-header").textContent = `Ronda: ${round}, Cartas: ${cardsPerPlayer}, Reparte: ${dealerName}`;
 }
@@ -26,6 +46,22 @@ function updateDisplay() {
         card.querySelector(".bid-value").textContent = player.bid;
         card.querySelector(".won-value").textContent = player.won;
     });
+    checkBidRules();
+}
+
+function checkBidRules() {
+    // Validar regla: la suma de apuestas no puede ser igual al número de cartas
+    const totalBids = players.reduce((acc, p) => acc + p.bid, 0);
+    const warningEl = document.getElementById("bid-warning");
+
+    if (totalBids === cardsPerPlayer) {
+        const dealer = players[dealerIndex];
+        warningEl.textContent = `${dealer.name} no puede apostar ${dealer.bid} rondas`;
+        warningEl.style.display = "block";
+    } else {
+        warningEl.style.display = "none";
+        warningEl.textContent = "";
+    }
 }
 
 function changeValue(index, field, delta) {
@@ -57,6 +93,7 @@ function saveRound() {
         player.total += points;
 
         return {
+            playerId: index,
             name: player.name,
             bid: player.bid,
             won: player.won,
@@ -92,6 +129,9 @@ function saveRound() {
     const roundBlock = createRoundBlock(round, cardsPerPlayer, roundResults);
     scoreboard.insertBefore(roundBlock, scoreboard.firstChild);
 
+    // Habilitar botón de deshacer
+    document.getElementById("undo-round").disabled = false;
+
     // 5. Guardar en el historial de la partida actual
     gameRoundsHistory.push({
         round: round,
@@ -114,6 +154,54 @@ function saveRound() {
         document.getElementById("current-round-header").textContent = "¡Fin de la partida!";
 
         saveGameToHistory();
+    }
+}
+
+function undoLastRound() {
+    if (gameRoundsHistory.length === 0) return;
+
+    const wasGameOver = !gameActive;
+    const lastRound = gameRoundsHistory.pop();
+
+    // Revertir puntuaciones
+    lastRound.results.forEach(res => {
+        let playerIndex = -1;
+        if (typeof res.playerId !== 'undefined') {
+            playerIndex = res.playerId;
+        } else {
+            // Fallback por nombre para versiones anteriores
+            playerIndex = players.findIndex(p => p.name === res.name);
+        }
+
+        if (playerIndex !== -1) {
+            players[playerIndex].total -= res.points;
+        }
+    });
+
+    // Eliminar bloque visual del historial
+    const scoreboard = document.getElementById("scoreboard");
+    if (scoreboard.firstChild) {
+        scoreboard.removeChild(scoreboard.firstChild);
+    }
+
+    if (wasGameOver) {
+        // Estábamos en el estado de fin de partida, así que restauramos
+        gameActive = true;
+        document.getElementById("next-round").disabled = false;
+        document.getElementById("next-round").textContent = "Guardar ronda";
+    } else {
+        // Retroceder ronda y dealer
+        round--;
+        dealerIndex = (dealerIndex - 1 + numPlayers) % numPlayers;
+    }
+
+    cardsPerPlayer = roundCardsSequence[round - 1];
+
+    updateDisplay();
+    updateCurrentRoundHeader();
+
+    if (gameRoundsHistory.length === 0) {
+        document.getElementById("undo-round").disabled = true;
     }
 }
 
@@ -195,12 +283,21 @@ function openHistoryModal() {
         history.slice().reverse().forEach(game => {
             const item = document.createElement("div");
             item.className = "history-item";
+
+            // Clonar y ordenar jugadores por puntuación (mayor a menor)
+            const sortedPlayers = [...game.players].sort((a, b) => b.total - a.total);
+
+            // Generar texto HTML: Ganador en negrita, resto normal
+            const playersHtml = sortedPlayers.map((p, index) => {
+                const text = `${p.name}: ${p.total}`;
+                return index === 0 ? `<strong>${text}</strong>` : text;
+            }).join(', ');
+
             item.innerHTML = `
-                <div>
+                <div style="width: 100%">
                     <div class="game-name">${game.name}</div>
-                    <div class="game-players">${game.players.map(p => p.name).join(', ')}</div>
+                    <div class="game-players" style="margin-top: 4px;">${playersHtml}</div>
                 </div>
-                <div class="game-name">${game.players[0].total} pts</div>
             `;
             item.onclick = () => {
                 viewGameHistory(game);
@@ -214,6 +311,7 @@ function openHistoryModal() {
 }
 
 function viewGameHistory(game) {
+    activeHistoryGame = game;
     const scoreboard = document.getElementById("scoreboard");
     scoreboard.innerHTML = `<h3>Visualizando: ${game.name}</h3>`;
 
@@ -284,9 +382,18 @@ function setup() {
     );
 
     document.getElementById("next-round").addEventListener("click", saveRound);
+    document.getElementById("undo-round").addEventListener("click", undoLastRound);
+    document.getElementById("open-chart").addEventListener("click", showChart);
     document.getElementById("open-history").addEventListener("click", openHistoryModal);
     document.getElementById("close-history").addEventListener("click", () => {
         document.getElementById("history-modal").style.display = "none";
+    });
+
+    document.getElementById("close-chart").addEventListener("click", () => {
+        document.getElementById("chart-modal").style.display = "none";
+    });
+    document.getElementById("close-chart-btn").addEventListener("click", () => {
+        document.getElementById("chart-modal").style.display = "none";
     });
 
     window.onclick = (event) => {
@@ -303,6 +410,7 @@ function setup() {
 }
 
 function resetGame() {
+    activeHistoryGame = null;
     // Resetear estado
     round = 1;
     cardsPerPlayer = roundCardsSequence[0];
@@ -318,6 +426,7 @@ function resetGame() {
     document.getElementById("scoreboard").innerHTML = "";
     document.getElementById("next-round").disabled = false;
     document.getElementById("next-round").textContent = "Guardar ronda";
+    document.getElementById("undo-round").disabled = true;
 
     // Pedir datos
     askPlayerNames();
@@ -332,3 +441,93 @@ function getIndex(element) {
 }
 
 window.addEventListener("load", setup);
+
+function showChart() {
+    const isHistory = !!activeHistoryGame;
+    const historySource = isHistory ? activeHistoryGame.rounds : gameRoundsHistory;
+    const playerSource = isHistory ? activeHistoryGame.players : players;
+
+    // Datasets init
+    const datasets = playerSource.map((p, i) => ({
+        label: p.name,
+        data: [0], // Todos empiezan en 0
+        borderColor: getPlayerColor(i),
+        backgroundColor: getPlayerColor(i),
+        tension: 0.1,
+        fill: false,
+        pointRadius: 4,
+        pointHoverRadius: 6
+    }));
+
+    const labels = ["Inicio"];
+
+    // Populate data
+    historySource.forEach(roundData => {
+        labels.push(`R ${roundData.round}`);
+
+        // Los resultados están ordenados, así que buscamos al jugador correcto
+        roundData.results.forEach(res => {
+            let pIndex = -1;
+            if (typeof res.playerId !== 'undefined') {
+                pIndex = res.playerId;
+            } else {
+                pIndex = playerSource.findIndex(p => p.name === res.name);
+            }
+
+            if (pIndex !== -1) {
+                datasets[pIndex].data.push(res.total);
+            }
+        });
+    });
+
+    // Prepare modal
+    const ctx = document.getElementById('scoreChart').getContext('2d');
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+
+    Chart.defaults.font.family = "'Quicksand', sans-serif";
+    Chart.defaults.color = '#1e4022';
+
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                y: {
+                    grid: { color: 'rgba(30, 64, 34, 0.1)' },
+                    ticks: { color: '#1e4022' }
+                },
+                x: {
+                    grid: { color: 'rgba(30, 64, 34, 0.1)' },
+                    ticks: { color: '#1e4022' }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: { color: '#1e4022' }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            }
+        }
+    });
+
+    document.getElementById("chart-modal").style.display = "block";
+}
+
+function getPlayerColor(index) {
+    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'];
+    return colors[index % colors.length];
+}

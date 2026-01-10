@@ -1,4 +1,4 @@
-const CACHE_NAME = "pocha-cache-v4";
+const CACHE_NAME = "pocha-cache-v12";
 const ASSETS = [
   "/",
   "/index.html",

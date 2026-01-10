@@ -12,18 +12,28 @@ body {
     background-color: #2f5335;
     padding: 1rem;
     border-radius: 12px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
 }
 
-h1, h2 {
+h1,
+h2 {
     text-align: center;
     color: #eac77a;
 }
 
 .player-inputs {
     display: flex;
-    flex-wrap: wrap;	
+    flex-wrap: wrap;
     margin-bottom: 2rem;
+}
+
+.warning-message {
+    color: #fca5a5;
+    font-weight: bold;
+    text-align: center;
+    margin-top: -1rem;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
 }
 
 .player-card {
@@ -31,7 +41,7 @@ h1, h2 {
     border: 2px solid #598c5c;
     border-radius: 8px;
     padding: 0.8rem;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     width: calc(50% - 10px);
     margin: 5px;
     box-sizing: border-box;
@@ -197,7 +207,31 @@ h1, h2 {
     cursor: pointer;
     display: block;
     width: fit-content;
-    margin: 0 auto 2rem auto;
+    margin: 0;
+}
+
+.undo-btn {
+    background-color: #e08e79;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    color: #1e4022;
+    font-weight: bold;
+    cursor: pointer;
+    display: block;
+    width: fit-content;
+    margin: 0;
+}
+
+.undo-btn:hover {
+    background-color: #e89f8c;
+}
+
+.undo-btn:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 #next-round:hover {
@@ -296,7 +330,7 @@ h1, h2 {
         font-size: 0.95rem;
         margin-bottom: 0.6rem;
     }
-    
+
     .player-card input.player-name {
         font-size: 0.95rem;
     }
@@ -331,9 +365,26 @@ h1, h2 {
         padding: 0.35rem 0.05rem;
     }
 
-    #next-round {
-        width: 90%;
-        max-width: 300px;
-        font-size: 1.1rem;
+    #next-round,
+    .undo-btn {
+        width: auto;
+        flex: 1;
+        font-size: 1rem;
+        padding: 0.8rem 0.5rem;
     }
+}
+
+/* Chart Modal Light Theme */
+#chart-modal .modal-content {
+    background-color: #ffffff;
+    color: #1e4022;
+}
+
+#chart-modal .modal-header {
+    border-bottom: 1px solid rgba(30, 64, 34, 0.2);
+}
+
+#chart-modal h3,
+#chart-modal .close {
+    color: #1e4022;
 }

@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -96,14 +97,19 @@
                 </div>
             </div>
         </div>
+        <div id="bid-warning" class="warning-message" style="display: none;"></div>
 
-        <div style="text-align: center; margin-bottom: 2rem;">
+        <div style="text-align: center; margin-bottom: 2rem; display: flex; justify-content: center; gap: 1rem;">
             <button id="next-round">Guardar ronda</button>
+            <button id="undo-round" class="undo-btn" disabled>Volver atrás</button>
         </div>
 
         <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 2rem;">
             <h2>Resumen de Rondas</h2>
-            <button id="open-history" class="secondary-btn">Historial</button>
+            <div style="display: flex; gap: 0.5rem;">
+                <button id="open-chart" class="secondary-btn">Gráfica</button>
+                <button id="open-history" class="secondary-btn">Historial</button>
+            </div>
         </div>
 
         <div id="history-modal" class="modal">
@@ -117,11 +123,25 @@
                 </div>
             </div>
         </div>
+        <div id="chart-modal" class="modal">
+            <div class="modal-content"
+                style="width: 95%; height: 90vh; max-width: none; display: flex; flex-direction: column;">
+                <div class="modal-header">
+                    <h3>Evolución de Puntos</h3>
+                    <span id="close-chart" class="close">&times;</span>
+                </div>
+                <div style="flex: 1; min-height: 0; position: relative;">
+                    <canvas id="scoreChart"></canvas>
+                </div>
+                <button id="close-chart-btn" class="secondary-btn" style="align-self: center; margin-top: 1rem;">Volver
+                    a la partida</button>
+            </div>
+        </div>
         <div class="scoreboard" id="scoreboard">
         </div>
     </div>
 
-    <script src="script.js?v=3"></script>
+    <script src="script.js?v=10"></script>
 </body>
 
 </html>
