@@ -8,8 +8,11 @@
   "theme_color": "#1e4022",
   "description": "Calculadora profesional de puntuación para el juego de cartas Pocha (22 rondas).",
   "lang": "es",
-  "orientation": "portrait",
-  "categories": ["games", "utilities"],
+  "orientation": "any",
+  "categories": [
+    "games",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "icons/icon-192x192.png",

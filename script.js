@@ -531,3 +531,16 @@ function getPlayerColor(index) {
     const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'];
     return colors[index % colors.length];
 }
+
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+            .then(registration => {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(err => {
+                console.log('ServiceWorker registration failed: ', err);
+            });
+    });
+}
