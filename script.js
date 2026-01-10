@@ -567,7 +567,8 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!document.getElementById('btn-export')) return;
 
     document.getElementById('btn-export').addEventListener('click', () => {
-        const data = localStorage.getItem("pocha_game_history") || '[]';
+        // Intentar leer de la clave correcta (pocha_history)
+        const data = localStorage.getItem("pocha_history") || '[]';
         backupArea.style.display = 'block';
         backupText.value = data;
         btnSaveImport.style.display = 'none';
@@ -594,7 +595,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const data = JSON.parse(dataStr);
             if (Array.isArray(data)) {
                 if (confirm("Se van a sobrescribir las partidas actuales con las pegadas. ¿Continuar?")) {
-                    localStorage.setItem("pocha_game_history", JSON.stringify(data));
+                    localStorage.setItem("pocha_history", JSON.stringify(data));
                     alert("¡Datos restaurados correctamente!");
                     location.reload();
                 }
