@@ -59,7 +59,7 @@ function checkRules() {
     if (totalBids === cardsPerPlayer) {
         const dealer = players[dealerIndex];
         const word = dealer.bid === 1 ? "apuesta" : "apuestas";
-        messages.push(`El jugador ${dealer.name} no puede hacer ${dealer.bid} ${word}`);
+        messages.push(`${dealer.name} no puede hacer ${dealer.bid} ${word}`);
     }
 
     // Validar regla 2: suma de ganadas <= cartas repartidas
