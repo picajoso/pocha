@@ -46,17 +46,29 @@ function updateDisplay() {
         card.querySelector(".bid-value").textContent = player.bid;
         card.querySelector(".won-value").textContent = player.won;
     });
-    checkBidRules();
+    checkRules();
 }
 
-function checkBidRules() {
-    // Validar regla: la suma de apuestas no puede ser igual al número de cartas
-    const totalBids = players.reduce((acc, p) => acc + p.bid, 0);
+function checkRules() {
     const warningEl = document.getElementById("bid-warning");
+    let messages = [];
+
+    // Validar regla 1: suma de apuestas (Dealer forcing)
+    const totalBids = players.reduce((acc, p) => acc + p.bid, 0);
 
     if (totalBids === cardsPerPlayer) {
         const dealer = players[dealerIndex];
-        warningEl.textContent = `${dealer.name} no puede apostar ${dealer.bid} rondas`;
+        messages.push(`${dealer.name} no puede apostar ${dealer.bid} rondas`);
+    }
+
+    // Validar regla 2: suma de ganadas <= cartas repartidas
+    const totalWon = players.reduce((acc, p) => acc + p.won, 0);
+    if (totalWon > cardsPerPlayer) {
+        messages.push("Hay más rondas ganadas que cartas repartidas");
+    }
+
+    if (messages.length > 0) {
+        warningEl.innerHTML = messages.join("<br>");
         warningEl.style.display = "block";
     } else {
         warningEl.style.display = "none";
