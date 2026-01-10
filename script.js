@@ -492,6 +492,13 @@ function showChart() {
         });
     });
 
+    // Sort datasets by final score descending
+    datasets.sort((a, b) => {
+        const lastA = a.data[a.data.length - 1];
+        const lastB = b.data[b.data.length - 1];
+        return lastB - lastA;
+    });
+
     // Prepare modal
     const ctx = document.getElementById('scoreChart').getContext('2d');
     if (chartInstance) {
