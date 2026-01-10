@@ -121,6 +121,22 @@
                 <div id="history-list" class="history-list">
                     <!-- Las partidas se cargarán aquí -->
                 </div>
+
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(212, 175, 55, 0.3);">
+                    <h4 style="color: #eac77a; margin: 0 0 0.5rem 0;">Copia de Seguridad</h4>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <button id="btn-export" class="secondary-btn" style="flex: 1;">Exportar</button>
+                        <button id="btn-import" class="secondary-btn" style="flex: 1;">Importar</button>
+                    </div>
+                    <div id="backup-area" style="display: none;">
+                        <textarea id="backup-text" placeholder="Datos..."
+                            style="width: 100%; height: 80px; background: #1e4022; color: #fff; border: 1px solid #598c5c; border-radius: 4px; padding: 5px; box-sizing: border-box; font-size: 0.8rem;"></textarea>
+                        <button id="btn-save-import"
+                            style="width: 100%; margin-top: 0.5rem; display: none; background-color: #d6ad60; border: none; padding: 0.8rem; border-radius: 8px; color: #1e4022; font-weight: bold;">Restaurar
+                            Datos</button>
+                        <p id="backup-status" style="font-size: 0.8rem; margin: 0.5rem 0 0 0; color: #ddd;"></p>
+                    </div>
+                </div>
             </div>
         </div>
         <div id="chart-modal" class="modal">
@@ -141,7 +157,7 @@
         </div>
     </div>
 
-    <script src="script.js?v=17"></script>
+    <script src="script.js?v=18"></script>
 </body>
 
 </html>

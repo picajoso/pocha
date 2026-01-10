@@ -556,3 +556,53 @@ if ('serviceWorker' in navigator) {
             });
     });
 }
+
+// Funcionalidad de Backup (Migración)
+window.addEventListener('DOMContentLoaded', () => {
+    const backupArea = document.getElementById('backup-area');
+    const backupText = document.getElementById('backup-text');
+    const btnSaveImport = document.getElementById('btn-save-import');
+    const backupStatus = document.getElementById('backup-status');
+
+    if (!document.getElementById('btn-export')) return;
+
+    document.getElementById('btn-export').addEventListener('click', () => {
+        const data = localStorage.getItem("pocha_game_history") || '[]';
+        backupArea.style.display = 'block';
+        backupText.value = data;
+        btnSaveImport.style.display = 'none';
+        backupStatus.innerHTML = '<strong>COPIAR:</strong> Selecciona todo el texto de arriba y cópialo.';
+        backupText.select();
+    });
+
+    document.getElementById('btn-import').addEventListener('click', () => {
+        backupArea.style.display = 'block';
+        backupText.value = '';
+        backupText.placeholder = 'Pega aquí el código copiado de la otra versión...';
+        btnSaveImport.style.display = 'block';
+        backupStatus.textContent = 'Pega el texto y pulsa "Restaurar Datos".';
+    });
+
+    btnSaveImport.addEventListener('click', () => {
+        try {
+            const dataStr = backupText.value.trim();
+            if (!dataStr) {
+                alert("Por favor, pega los datos primero.");
+                return;
+            }
+
+            const data = JSON.parse(dataStr);
+            if (Array.isArray(data)) {
+                if (confirm("Se van a sobrescribir las partidas actuales con las pegadas. ¿Continuar?")) {
+                    localStorage.setItem("pocha_game_history", JSON.stringify(data));
+                    alert("¡Datos restaurados correctamente!");
+                    location.reload();
+                }
+            } else {
+                alert("Error: El formato no es válido (no es una lista).");
+            }
+        } catch (e) {
+            alert("Error: El texto no es un JSON válido. Revisa que lo hayas copiado todo.");
+        }
+    });
+});
