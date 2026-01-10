@@ -620,6 +620,8 @@ window.addEventListener('DOMContentLoaded', () => {
             if (Array.isArray(data)) {
                 if (confirm("Se van a sobrescribir las partidas actuales con las pegadas. ¿Continuar?")) {
                     localStorage.setItem("pocha_history", JSON.stringify(data));
+                    alert("¡Datos restaurados correctamente!");
+                    location.reload();
                 }
             } else {
                 alert("Error: El formato no es válido (no es una lista).");
