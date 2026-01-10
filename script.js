@@ -537,7 +537,10 @@ function showChart() {
                 },
                 tooltip: {
                     mode: 'index',
-                    intersect: false
+                    intersect: false,
+                    itemSort: function (a, b) {
+                        return b.raw - a.raw; // Ordenar de mayor a menor en el tooltip
+                    }
                 }
             }
         }
