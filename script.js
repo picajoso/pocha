@@ -93,6 +93,13 @@ function changeValue(index, field, delta) {
 function saveRound() {
     if (!gameActive) return;
 
+    // Validar que la suma de bazas ganadas sea igual al número de cartas repartidas
+    const totalWon = players.reduce((sum, player) => sum + player.won, 0);
+    if (totalWon !== cardsPerPlayer) {
+        alert(`La suma de bazas ganadas (${totalWon}) debe ser igual al número de cartas repartidas (${cardsPerPlayer}).\n\nRevisa los datos de las rondas ganadas.`);
+        return;
+    }
+
     // Crear el cuerpo de la tabla
     const tbody = document.createElement("tbody");
 
@@ -307,20 +314,44 @@ function openHistoryModal() {
             }).join(', ');
 
             item.innerHTML = `
-                <div style="width: 100%">
-                    <div class="game-name">${game.name}</div>
-                    <div class="game-players" style="margin-top: 4px;">${playersHtml}</div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%">
+                    <div style="flex: 1">
+                        <div class="game-name">${game.name}</div>
+                        <div class="game-players" style="margin-top: 4px;">${playersHtml}</div>
+                    </div>
+                    <button class="btn-delete-game" data-id="${game.id}" style="background: #c44; border: none; color: white; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">🗑️</button>
                 </div>
             `;
-            item.onclick = () => {
-                viewGameHistory(game);
-                modal.style.display = "none";
-            };
+
+            // Click en el item abre el detalle
+            item.addEventListener('click', (e) => {
+                if (!e.target.classList.contains('btn-delete-game')) {
+                    viewGameHistory(game);
+                    modal.style.display = "none";
+                }
+            });
+
+            // Click en el botón de borrar
+            const deleteBtn = item.querySelector('.btn-delete-game');
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm(`¿Borrar la partida "${game.name}"?`)) {
+                    deleteGame(game.id);
+                    openHistoryModal(); // Recargar la lista
+                }
+            });
+
             historyList.appendChild(item);
         });
     }
 
     modal.style.display = "block";
+}
+
+function deleteGame(gameId) {
+    const history = JSON.parse(localStorage.getItem("pocha_history") || "[]");
+    const updatedHistory = history.filter(game => game.id !== gameId);
+    localStorage.setItem("pocha_history", JSON.stringify(updatedHistory));
 }
 
 function viewGameHistory(game) {
@@ -573,6 +604,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const backupArea = document.getElementById('backup-area');
     const backupText = document.getElementById('backup-text');
     const btnSaveImport = document.getElementById('btn-save-import');
+    const btnSaveSingle = document.getElementById('btn-save-single');
     const btnCopy = document.getElementById('btn-copy-clipboard');
     const backupStatus = document.getElementById('backup-status');
 
@@ -584,6 +616,7 @@ window.addEventListener('DOMContentLoaded', () => {
         backupArea.style.display = 'block';
         backupText.value = data;
         btnSaveImport.style.display = 'none';
+        btnSaveSingle.style.display = 'none';
 
         if (btnCopy) btnCopy.style.display = 'block';
 
@@ -595,8 +628,19 @@ window.addEventListener('DOMContentLoaded', () => {
         backupText.value = '';
         backupText.placeholder = 'Pega aquí el código copiado de la otra versión...';
         btnSaveImport.style.display = 'block';
+        btnSaveSingle.style.display = 'none';
         if (btnCopy) btnCopy.style.display = 'none';
         backupStatus.textContent = 'Pega el texto y pulsa "Restaurar Datos".';
+    });
+
+    document.getElementById('btn-import-single').addEventListener('click', () => {
+        backupArea.style.display = 'block';
+        backupText.value = '';
+        backupText.placeholder = 'Pega aquí el JSON de una partida individual...';
+        btnSaveImport.style.display = 'none';
+        btnSaveSingle.style.display = 'block';
+        if (btnCopy) btnCopy.style.display = 'none';
+        backupStatus.textContent = 'Pega el JSON de una partida y pulsa "Añadir Partida".';
     });
 
     if (btnCopy) {
@@ -636,6 +680,53 @@ window.addEventListener('DOMContentLoaded', () => {
                 }
             } else {
                 alert("Error: El formato no es válido (no es una lista).");
+            }
+        } catch (e) {
+            alert("Error: El texto no es un JSON válido. Revisa que lo hayas copiado todo.");
+        }
+    });
+
+    // Validar que un objeto de partida tiene la estructura correcta
+    function isValidGame(obj) {
+        return (
+            obj &&
+            typeof obj === 'object' &&
+            typeof obj.id === 'number' &&
+            typeof obj.name === 'string' &&
+            typeof obj.date === 'string' &&
+            Array.isArray(obj.players) &&
+            Array.isArray(obj.rounds)
+        );
+    }
+
+    btnSaveSingle.addEventListener('click', () => {
+        try {
+            const dataStr = backupText.value.trim();
+            if (!dataStr) {
+                alert("Por favor, pega los datos primero.");
+                return;
+            }
+
+            const game = JSON.parse(dataStr);
+
+            // Verificar que sea un objeto de partida válido
+            if (isValidGame(game)) {
+                // Obtener historial actual y añadir la nueva partida
+                const history = JSON.parse(localStorage.getItem("pocha_history") || "[]");
+
+                // Verificar si ya existe una partida con el mismo ID
+                const exists = history.some(g => g.id === game.id);
+                if (exists) {
+                    alert("Esta partida ya existe en el historial (mismo ID).");
+                    return;
+                }
+
+                history.push(game);
+                localStorage.setItem("pocha_history", JSON.stringify(history));
+                alert("¡Partida añadida correctamente!");
+                location.reload();
+            } else {
+                alert("Error: El formato no es válido. Debe ser un objeto de partida con los campos: id, name, date, players, rounds.");
             }
         } catch (e) {
             alert("Error: El texto no es un JSON válido. Revisa que lo hayas copiado todo.");

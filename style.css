@@ -98,11 +98,19 @@ h2 {
 }
 
 .secondary-btn {
-    background-color: transparent;
-    border: 1px solid var(--gold);
-    color: var(--gold);
+    background-color: #598c5c;
+    border: 1px solid #598c5c;
+    color: #fff;
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.secondary-btn:hover {
+    background-color: #6a9f6d;
+    border-color: #6a9f6d;
 }
 
 /* Modal Styles */
