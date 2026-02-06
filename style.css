@@ -329,6 +329,20 @@ h2 {
     font-size: 1.2rem;
 }
 
+.stats-buttons-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.rounds-header {
+    text-align: center;
+    color: #eac77a;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
 /* ------------------------------------------------------------- */
 /* AJUSTES ESPECÍFICOS PARA MÓVILES (max-width: 600px) */
 /* ------------------------------------------------------------- */
