@@ -738,6 +738,17 @@ window.addEventListener('DOMContentLoaded', () => {
 // ESTADÍSTICAS
 // ============================================
 
+// Normalizar nombres para unificar variantes
+function normalizeName(name) {
+    const nameMap = {
+        'Angel': 'Ángel',
+        'Japi': 'Cristina',
+        'Pipi': 'Javi',
+        'Pepa': 'Pepa'
+    };
+    return nameMap[name] || name;
+}
+
 // Abrir modal de estadísticas de la partida actual
 document.getElementById('open-stats').addEventListener('click', () => {
     if (gameRoundsHistory.length === 0) {
@@ -857,26 +868,35 @@ function showGameStats(game) {
 
     // Mejor racha positiva
     html += '<h4 style="color: #eac77a;">🔥 Mejor Racha Positiva (rondas sin negativos)</h4>';
-    const positiveStreaks = playerNames.map(name => ({
-        name,
-        streak: calculatePositiveStreak(game, name)
-    })).sort((a, b) => b.streak - a.streak);
+    const positiveStreaks = playerNames.map(originalName => {
+        const normalizedName = normalizeName(originalName);
+        return {
+            name: normalizedName,
+            streak: calculatePositiveStreak(game, originalName)
+        };
+    }).sort((a, b) => b.streak - a.streak);
     html += renderStreakTable(positiveStreaks);
 
     // Mejor racha negativa
     html += '<h4 style="color: #eac77a; margin-top: 1.5rem;">❄️ Mejor Racha Negativa (rondas seguidas con negativos)</h4>';
-    const negativeStreaks = playerNames.map(name => ({
-        name,
-        streak: calculateNegativeStreak(game, name)
-    })).sort((a, b) => b.streak - a.streak);
+    const negativeStreaks = playerNames.map(originalName => {
+        const normalizedName = normalizeName(originalName);
+        return {
+            name: normalizedName,
+            streak: calculateNegativeStreak(game, originalName)
+        };
+    }).sort((a, b) => b.streak - a.streak);
     html += renderStreakTable(negativeStreaks);
 
     // % de acierto
     html += '<h4 style="color: #eac77a; margin-top: 1.5rem;">🎯 % de Acierto (bid = won)</h4>';
-    const accuracies = playerNames.map(name => ({
-        name,
-        value: calculateAccuracy(game, name)
-    })).sort((a, b) => parseFloat(b.value) - parseFloat(a.value));
+    const accuracies = playerNames.map(originalName => {
+        const normalizedName = normalizeName(originalName);
+        return {
+            name: normalizedName,
+            value: calculateAccuracy(game, originalName)
+        };
+    }).sort((a, b) => parseFloat(b.value) - parseFloat(a.value));
     html += '<table class="stats-table"><thead><tr><th>Jugador</th><th>% Acierto</th></tr></thead><tbody>';
     accuracies.forEach(({ name, value }) => {
         html += `<tr><td>${name}</td><td>${value}%</td></tr>`;
@@ -886,10 +906,11 @@ function showGameStats(game) {
     // Mejor y peor ronda
     html += '<h4 style="color: #eac77a; margin-top: 1.5rem;">📊 Mejor y Peor Ronda Individual</h4>';
     html += '<table class="stats-table"><thead><tr><th>Jugador</th><th>Mejor</th><th>Peor</th></tr></thead><tbody>';
-    playerNames.forEach(name => {
-        const best = calculateBestRound(game, name);
-        const worst = calculateWorstRound(game, name);
-        html += `<tr><td>${name}</td><td style="color: #4BC0C0;">+${best}</td><td style="color: #e08e79;">${worst}</td></tr>`;
+    playerNames.forEach(originalName => {
+        const normalizedName = normalizeName(originalName);
+        const best = calculateBestRound(game, originalName);
+        const worst = calculateWorstRound(game, originalName);
+        html += `<tr><td>${normalizedName}</td><td style="color: #4BC0C0;">+${best}</td><td style="color: #e08e79;">${worst}</td></tr>`;
     });
     html += '</tbody></table>';
 
@@ -976,11 +997,12 @@ function calculateHistoricalRanking(history) {
     history.forEach(game => {
         const sortedPlayers = [...game.players].sort((a, b) => b.total - a.total);
         sortedPlayers.forEach((player, index) => {
-            if (!ranking[player.name]) {
-                ranking[player.name] = 0;
+            const normalizedName = normalizeName(player.name);
+            if (!ranking[normalizedName]) {
+                ranking[normalizedName] = 0;
             }
             // 4 puntos al 1º, 3 al 2º, 2 al 3º, 1 al 4º
-            ranking[player.name] += Math.max(1, 4 - index);
+            ranking[normalizedName] += Math.max(1, 4 - index);
         });
     });
 
@@ -997,12 +1019,13 @@ function calculateTopPositiveStreaks(history) {
         const playersInGame = new Set();
         game.rounds.forEach(round => {
             round.results.forEach(result => {
-                const key = `${game.id}-${result.name}`;
+                const normalizedName = normalizeName(result.name);
+                const key = `${game.id}-${normalizedName}`;
                 if (!playersInGame.has(key)) {
                     const streak = calculatePositiveStreak(game, result.name);
                     if (streak > 0) {
                         allStreaks.push({
-                            name: result.name,
+                            name: normalizedName,
                             streak,
                             game: game.name
                         });
@@ -1024,12 +1047,13 @@ function calculateTopNegativeStreaks(history) {
         const playersInGame = new Set();
         game.rounds.forEach(round => {
             round.results.forEach(result => {
-                const key = `${game.id}-${result.name}`;
+                const normalizedName = normalizeName(result.name);
+                const key = `${game.id}-${normalizedName}`;
                 if (!playersInGame.has(key)) {
                     const streak = calculateNegativeStreak(game, result.name);
                     if (streak > 0) {
                         allStreaks.push({
-                            name: result.name,
+                            name: normalizedName,
                             streak,
                             game: game.name
                         });
@@ -1049,10 +1073,11 @@ function calculateGamesWon(history) {
 
     history.forEach(game => {
         const winner = game.players.sort((a, b) => b.total - a.total)[0];
-        if (!wins[winner.name]) {
-            wins[winner.name] = 0;
+        const normalizedName = normalizeName(winner.name);
+        if (!wins[normalizedName]) {
+            wins[normalizedName] = 0;
         }
-        wins[winner.name]++;
+        wins[normalizedName]++;
     });
 
     return Object.entries(wins).map(([name, wins]) => ({ name, wins }));
@@ -1064,11 +1089,12 @@ function calculateAverageScores(history) {
 
     history.forEach(game => {
         game.players.forEach(player => {
-            if (!scores[player.name]) {
-                scores[player.name] = { total: 0, count: 0 };
+            const normalizedName = normalizeName(player.name);
+            if (!scores[normalizedName]) {
+                scores[normalizedName] = { total: 0, count: 0 };
             }
-            scores[player.name].total += player.total;
-            scores[player.name].count++;
+            scores[normalizedName].total += player.total;
+            scores[normalizedName].count++;
         });
     });
 
@@ -1085,12 +1111,13 @@ function calculateGlobalAccuracy(history) {
     history.forEach(game => {
         game.rounds.forEach(round => {
             round.results.forEach(result => {
-                if (!accuracy[result.name]) {
-                    accuracy[result.name] = { exact: 0, total: 0 };
+                const normalizedName = normalizeName(result.name);
+                if (!accuracy[normalizedName]) {
+                    accuracy[normalizedName] = { exact: 0, total: 0 };
                 }
-                accuracy[result.name].total++;
+                accuracy[normalizedName].total++;
                 if (result.bid === result.won) {
-                    accuracy[result.name].exact++;
+                    accuracy[normalizedName].exact++;
                 }
             });
         });
@@ -1109,11 +1136,12 @@ function calculateNeverMiss(history) {
     history.forEach(game => {
         game.rounds.forEach(round => {
             round.results.forEach(result => {
-                if (!exact[result.name]) {
-                    exact[result.name] = 0;
+                const normalizedName = normalizeName(result.name);
+                if (!exact[normalizedName]) {
+                    exact[normalizedName] = 0;
                 }
                 if (result.bid === result.won) {
-                    exact[result.name]++;
+                    exact[normalizedName]++;
                 }
             });
         });
