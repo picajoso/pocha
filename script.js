@@ -733,3 +733,410 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+// ============================================
+// ESTADÍSTICAS
+// ============================================
+
+// Abrir modal de estadísticas de la partida actual
+document.getElementById('open-stats').addEventListener('click', () => {
+    if (gameRoundsHistory.length === 0) {
+        alert("No hay rondas jugadas aún para mostrar estadísticas.");
+        return;
+    }
+    showGameStats(activeHistoryGame || { rounds: gameRoundsHistory, players: players.map(p => ({ name: p.name, total: p.total })) });
+});
+
+// Abrir modal de estadísticas globales desde el historial
+document.getElementById('btn-global-stats').addEventListener('click', () => {
+    const history = JSON.parse(localStorage.getItem("pocha_history") || "[]");
+    if (history.length === 0) {
+        alert("No hay partidas en el historial.");
+        return;
+    }
+    document.getElementById('history-modal').style.display = 'none';
+    showGlobalStats(history);
+});
+
+// Cerrar modal de estadísticas
+document.getElementById('close-stats').addEventListener('click', () => {
+    document.getElementById('stats-modal').style.display = 'none';
+});
+
+// Cerrar modal al hacer clic fuera
+window.addEventListener('click', (e) => {
+    const statsModal = document.getElementById('stats-modal');
+    if (e.target === statsModal) {
+        statsModal.style.display = 'none';
+    }
+});
+
+// Calcular mejor racha positiva de un jugador en una partida
+function calculatePositiveStreak(game, playerName) {
+    let maxStreak = 0;
+    let currentStreak = 0;
+
+    game.rounds.forEach(round => {
+        const playerResult = round.results.find(r => r.name === playerName);
+        if (playerResult && playerResult.points >= 0) {
+            currentStreak++;
+            maxStreak = Math.max(maxStreak, currentStreak);
+        } else {
+            currentStreak = 0;
+        }
+    });
+
+    return maxStreak;
+}
+
+// Calcular mejor racha negativa de un jugador en una partida
+function calculateNegativeStreak(game, playerName) {
+    let maxStreak = 0;
+    let currentStreak = 0;
+
+    game.rounds.forEach(round => {
+        const playerResult = round.results.find(r => r.name === playerName);
+        if (playerResult && playerResult.points < 0) {
+            currentStreak++;
+            maxStreak = Math.max(maxStreak, currentStreak);
+        } else {
+            currentStreak = 0;
+        }
+    });
+
+    return maxStreak;
+}
+
+// Calcular % de acierto de un jugador en una partida
+function calculateAccuracy(game, playerName) {
+    let exactRounds = 0;
+    game.rounds.forEach(round => {
+        const playerResult = round.results.find(r => r.name === playerName);
+        if (playerResult && playerResult.bid === playerResult.won) {
+            exactRounds++;
+        }
+    });
+    return game.rounds.length > 0 ? ((exactRounds / game.rounds.length) * 100).toFixed(1) : 0;
+}
+
+// Calcular mejor ronda individual de un jugador
+function calculateBestRound(game, playerName) {
+    let best = -Infinity;
+    game.rounds.forEach(round => {
+        const playerResult = round.results.find(r => r.name === playerName);
+        if (playerResult && playerResult.points > best) {
+            best = playerResult.points;
+        }
+    });
+    return best > -Infinity ? best : 0;
+}
+
+// Calcular peor ronda individual de un jugador
+function calculateWorstRound(game, playerName) {
+    let worst = Infinity;
+    game.rounds.forEach(round => {
+        const playerResult = round.results.find(r => r.name === playerName);
+        if (playerResult && playerResult.points < worst) {
+            worst = playerResult.points;
+        }
+    });
+    return worst < Infinity ? worst : 0;
+}
+
+// Mostrar estadísticas de una partida concreta
+function showGameStats(game) {
+    const modal = document.getElementById('stats-modal');
+    const title = document.getElementById('stats-title');
+    const content = document.getElementById('stats-content');
+
+    title.textContent = `Estadísticas: ${game.name || 'Partida actual'}`;
+
+    const playerNames = game.rounds[0]?.results.map(r => r.name) || [];
+
+    let html = '<div class="stats-section">';
+
+    // Mejor racha positiva
+    html += '<h4 style="color: #eac77a;">🔥 Mejor Racha Positiva (rondas sin negativos)</h4>';
+    const positiveStreaks = playerNames.map(name => ({
+        name,
+        streak: calculatePositiveStreak(game, name)
+    })).sort((a, b) => b.streak - a.streak);
+    html += renderStreakTable(positiveStreaks);
+
+    // Mejor racha negativa
+    html += '<h4 style="color: #eac77a; margin-top: 1.5rem;">❄️ Mejor Racha Negativa (rondas seguidas con negativos)</h4>';
+    const negativeStreaks = playerNames.map(name => ({
+        name,
+        streak: calculateNegativeStreak(game, name)
+    })).sort((a, b) => b.streak - a.streak);
+    html += renderStreakTable(negativeStreaks);
+
+    // % de acierto
+    html += '<h4 style="color: #eac77a; margin-top: 1.5rem;">🎯 % de Acierto (bid = won)</h4>';
+    const accuracies = playerNames.map(name => ({
+        name,
+        value: calculateAccuracy(game, name)
+    })).sort((a, b) => parseFloat(b.value) - parseFloat(a.value));
+    html += '<table class="stats-table"><thead><tr><th>Jugador</th><th>% Acierto</th></tr></thead><tbody>';
+    accuracies.forEach(({ name, value }) => {
+        html += `<tr><td>${name}</td><td>${value}%</td></tr>`;
+    });
+    html += '</tbody></table>';
+
+    // Mejor y peor ronda
+    html += '<h4 style="color: #eac77a; margin-top: 1.5rem;">📊 Mejor y Peor Ronda Individual</h4>';
+    html += '<table class="stats-table"><thead><tr><th>Jugador</th><th>Mejor</th><th>Peor</th></tr></thead><tbody>';
+    playerNames.forEach(name => {
+        const best = calculateBestRound(game, name);
+        const worst = calculateWorstRound(game, name);
+        html += `<tr><td>${name}</td><td style="color: #4BC0C0;">+${best}</td><td style="color: #e08e79;">${worst}</td></tr>`;
+    });
+    html += '</tbody></table>';
+
+    html += '</div>';
+    content.innerHTML = html;
+    modal.style.display = 'block';
+}
+
+// Mostrar estadísticas globales del historial
+function showGlobalStats(history) {
+    const modal = document.getElementById('stats-modal');
+    const title = document.getElementById('stats-title');
+    const content = document.getElementById('stats-content');
+
+    title.textContent = `Estadísticas Globales (${history.length} partidas)`;
+
+    let html = '<div class="stats-section">';
+
+    // 1. Clasificación histórica (4pts al 1º, 3pts al 2º, 2pts al 3º, 1pt al 4º)
+    html += '<h4 style="color: #eac77a;">🏆 Clasificación Histórica</h4>';
+    const historicalRanking = calculateHistoricalRanking(history);
+    html += '<table class="stats-table"><thead><tr><th>Jugador</th><th>Puntos</th></tr></thead><tbody>';
+    historicalRanking.forEach((entry, index) => {
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+        html += `<tr><td>${medal} ${entry.name}</td><td>${entry.points}</td></tr>`;
+    });
+    html += '</tbody></table>';
+
+    // 2. Top 10 mejores rachas positivas
+    html += '<h4 style="color: #eac77a; margin-top: 1.5rem;">🔥 Top 10 Mejores Rachas Positivas</h4>';
+    const topPositive = calculateTopPositiveStreaks(history);
+    html += renderTopStreaksTable(topPositive);
+
+    // 3. Top 10 mejores rachas negativas
+    html += '<h4 style="color: #eac77a; margin-top: 1.5rem;">❄️ Top 10 Mejores Rachas Negativas</h4>';
+    const topNegative = calculateTopNegativeStreaks(history);
+    html += renderTopStreaksTable(topNegative);
+
+    // 4. Partidas ganadas
+    html += '<h4 style="color: #eac77a; margin-top: 1.5rem;">👑 Partidas Ganadas (1º puesto)</h4>';
+    const gamesWon = calculateGamesWon(history);
+    html += '<table class="stats-table"><thead><tr><th>Jugador</th><th>Victorias</th></tr></thead><tbody>';
+    gamesWon.sort((a, b) => b.wins - a.wins).forEach(entry => {
+        html += `<tr><td>${entry.name}</td><td>${entry.wins}</td></tr>`;
+    });
+    html += '</tbody></table>';
+
+    // 5. Puntuación media por partida
+    html += '<h4 style="color: #eac77a; margin-top: 1.5rem;">📈 Puntuación Media por Partida</h4>';
+    const avgScores = calculateAverageScores(history);
+    html += '<table class="stats-table"><thead><tr><th>Jugador</th><th>Media</th></tr></thead><tbody>';
+    avgScores.sort((a, b) => b.avg - a.avg).forEach(entry => {
+        html += `<tr><td>${entry.name}</td><td>${entry.avg.toFixed(1)}</td></tr>`;
+    });
+    html += '</tbody></table>';
+
+    // 6. % de acierto global
+    html += '<h4 style="color: #eac77a; margin-top: 1.5rem;">🎯 % de Acierto Global</h4>';
+    const globalAccuracy = calculateGlobalAccuracy(history);
+    html += '<table class="stats-table"><thead><tr><th>Jugador</th><th>% Acierto</th></tr></thead><tbody>';
+    globalAccuracy.sort((a, b) => parseFloat(b.accuracy) - parseFloat(a.accuracy)).forEach(entry => {
+        html += `<tr><td>${entry.name}</td><td>${entry.accuracy}%</td></tr>`;
+    });
+    html += '</tbody></table>';
+
+    // 7. NeverMiss - más rondas exactas
+    html += '<h4 style="color: #eac77a; margin-top: 1.5rem;">💎 NeverMiss (más rondas exactas)</h4>';
+    const neverMiss = calculateNeverMiss(history);
+    html += '<table class="stats-table"><thead><tr><th>Jugador</th><th>Rondas Exactas</th></tr></thead><tbody>';
+    neverMiss.sort((a, b) => b.exact - a.exact).forEach(entry => {
+        html += `<tr><td>${entry.name}</td><td>${entry.exact}</td></tr>`;
+    });
+    html += '</tbody></table>';
+
+    html += '</div>';
+    content.innerHTML = html;
+    modal.style.display = 'block';
+}
+
+// Clasificación histórica (4-3-2-1 puntos según posición)
+function calculateHistoricalRanking(history) {
+    const ranking = {};
+
+    history.forEach(game => {
+        const sortedPlayers = [...game.players].sort((a, b) => b.total - a.total);
+        sortedPlayers.forEach((player, index) => {
+            if (!ranking[player.name]) {
+                ranking[player.name] = 0;
+            }
+            // 4 puntos al 1º, 3 al 2º, 2 al 3º, 1 al 4º
+            ranking[player.name] += Math.max(1, 4 - index);
+        });
+    });
+
+    return Object.entries(ranking)
+        .map(([name, points]) => ({ name, points }))
+        .sort((a, b) => b.points - a.points);
+}
+
+// Top 10 rachas positivas de toda la historia
+function calculateTopPositiveStreaks(history) {
+    const allStreaks = [];
+
+    history.forEach(game => {
+        const playersInGame = new Set();
+        game.rounds.forEach(round => {
+            round.results.forEach(result => {
+                const key = `${game.id}-${result.name}`;
+                if (!playersInGame.has(key)) {
+                    const streak = calculatePositiveStreak(game, result.name);
+                    if (streak > 0) {
+                        allStreaks.push({
+                            name: result.name,
+                            streak,
+                            game: game.name
+                        });
+                    }
+                    playersInGame.add(key);
+                }
+            });
+        });
+    });
+
+    return allStreaks.sort((a, b) => b.streak - a.streak).slice(0, 10);
+}
+
+// Top 10 rachas negativas de toda la historia
+function calculateTopNegativeStreaks(history) {
+    const allStreaks = [];
+
+    history.forEach(game => {
+        const playersInGame = new Set();
+        game.rounds.forEach(round => {
+            round.results.forEach(result => {
+                const key = `${game.id}-${result.name}`;
+                if (!playersInGame.has(key)) {
+                    const streak = calculateNegativeStreak(game, result.name);
+                    if (streak > 0) {
+                        allStreaks.push({
+                            name: result.name,
+                            streak,
+                            game: game.name
+                        });
+                    }
+                    playersInGame.add(key);
+                }
+            });
+        });
+    });
+
+    return allStreaks.sort((a, b) => b.streak - a.streak).slice(0, 10);
+}
+
+// Partidas ganadas (veces que quedó 1º)
+function calculateGamesWon(history) {
+    const wins = {};
+
+    history.forEach(game => {
+        const winner = game.players.sort((a, b) => b.total - a.total)[0];
+        if (!wins[winner.name]) {
+            wins[winner.name] = 0;
+        }
+        wins[winner.name]++;
+    });
+
+    return Object.entries(wins).map(([name, wins]) => ({ name, wins }));
+}
+
+// Puntuación media por partida
+function calculateAverageScores(history) {
+    const scores = {};
+
+    history.forEach(game => {
+        game.players.forEach(player => {
+            if (!scores[player.name]) {
+                scores[player.name] = { total: 0, count: 0 };
+            }
+            scores[player.name].total += player.total;
+            scores[player.name].count++;
+        });
+    });
+
+    return Object.entries(scores).map(([name, data]) => ({
+        name,
+        avg: data.total / data.count
+    }));
+}
+
+// % de acierto global
+function calculateGlobalAccuracy(history) {
+    const accuracy = {};
+
+    history.forEach(game => {
+        game.rounds.forEach(round => {
+            round.results.forEach(result => {
+                if (!accuracy[result.name]) {
+                    accuracy[result.name] = { exact: 0, total: 0 };
+                }
+                accuracy[result.name].total++;
+                if (result.bid === result.won) {
+                    accuracy[result.name].exact++;
+                }
+            });
+        });
+    });
+
+    return Object.entries(accuracy).map(([name, data]) => ({
+        name,
+        accuracy: ((data.exact / data.total) * 100).toFixed(1)
+    }));
+}
+
+// NeverMiss - más rondas exactas
+function calculateNeverMiss(history) {
+    const exact = {};
+
+    history.forEach(game => {
+        game.rounds.forEach(round => {
+            round.results.forEach(result => {
+                if (!exact[result.name]) {
+                    exact[result.name] = 0;
+                }
+                if (result.bid === result.won) {
+                    exact[result.name]++;
+                }
+            });
+        });
+    });
+
+    return Object.entries(exact).map(([name, exact]) => ({ name, exact }));
+}
+
+// Helpers para renderizar tablas
+function renderStreakTable(streaks) {
+    let html = '<table class="stats-table"><thead><tr><th>Jugador</th><th>Rondas</th></tr></thead><tbody>';
+    streaks.forEach(({ name, streak }) => {
+        html += `<tr><td>${name}</td><td>${streak}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    return html;
+}
+
+function renderTopStreaksTable(topStreaks) {
+    let html = '<table class="stats-table"><thead><tr><th>#</th><th>Jugador</th><th>Rondas</th><th>Partida</th></tr></thead><tbody>';
+    topStreaks.forEach((entry, index) => {
+        html += `<tr><td>${index + 1}</td><td>${entry.name}</td><td>${entry.streak}</td><td style="font-size: 0.8rem; opacity: 0.8;">${entry.game}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    return html;
+}

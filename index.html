@@ -109,6 +109,7 @@
             <div style="display: flex; gap: 0.5rem;">
                 <button id="open-chart" class="secondary-btn">Gráfica</button>
                 <button id="open-history" class="secondary-btn">Historial</button>
+                <button id="open-stats" class="secondary-btn">Estadísticas</button>
             </div>
         </div>
 
@@ -120,6 +121,11 @@
                 </div>
                 <div id="history-list" class="history-list">
                     <!-- Las partidas se cargarán aquí -->
+                </div>
+
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(212, 175, 55, 0.3);">
+                    <h4 style="color: #eac77a; margin: 0 0 0.5rem 0;">Estadísticas Globales</h4>
+                    <button id="btn-global-stats" class="secondary-btn" style="width: 100%;">Ver Estadísticas del Historial</button>
                 </div>
 
                 <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(212, 175, 55, 0.3);">
@@ -160,11 +166,22 @@
                     a la partida</button>
             </div>
         </div>
+        <div id="stats-modal" class="modal">
+            <div class="modal-content" style="width: 95%; max-width: 700px; max-height: 85vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3 id="stats-title">Estadísticas</h3>
+                    <span id="close-stats" class="close">&times;</span>
+                </div>
+                <div id="stats-content">
+                    <!-- Las estadísticas se cargarán aquí -->
+                </div>
+            </div>
+        </div>
         <div class="scoreboard" id="scoreboard">
         </div>
     </div>
 
-    <script src="script.js?v=25"></script>
+    <script src="script.js?v=26"></script>
 </body>
 
 </html>
