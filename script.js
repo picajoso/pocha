@@ -613,6 +613,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const btnSaveImport = document.getElementById('btn-save-import');
     const btnSaveSingle = document.getElementById('btn-save-single');
     const btnCopy = document.getElementById('btn-copy-clipboard');
+    const btnPaste = document.getElementById('btn-paste-clipboard');
     const backupStatus = document.getElementById('backup-status');
 
     if (!document.getElementById('btn-export')) return;
@@ -637,7 +638,10 @@ window.addEventListener('DOMContentLoaded', () => {
         btnSaveImport.style.display = 'block';
         btnSaveSingle.style.display = 'none';
         if (btnCopy) btnCopy.style.display = 'none';
+        if (btnPaste) btnPaste.style.display = 'block';
         backupStatus.textContent = 'Pega el texto y pulsa "Restaurar Datos".';
+        // Autofocus on the textarea for better UX on mobile
+        setTimeout(() => backupText.focus(), 100);
     });
 
     document.getElementById('btn-import-single').addEventListener('click', () => {
@@ -647,7 +651,10 @@ window.addEventListener('DOMContentLoaded', () => {
         btnSaveImport.style.display = 'none';
         btnSaveSingle.style.display = 'block';
         if (btnCopy) btnCopy.style.display = 'none';
+        if (btnPaste) btnPaste.style.display = 'block';
         backupStatus.textContent = 'Pega el JSON de una partida y pulsa "Añadir Partida".';
+        // Autofocus on the textarea for better UX on mobile
+        setTimeout(() => backupText.focus(), 100);
     });
 
     if (btnCopy) {
@@ -655,17 +662,47 @@ window.addEventListener('DOMContentLoaded', () => {
             const text = backupText.value;
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(text).then(() => {
-                    alert("¡Copiado al portapapeles!");
+                    backupStatus.textContent = '¡Copiado al portapapeles!';
+                    backupStatus.style.color = '#4BC0C0';
                 }).catch(err => {
                     // Fallback select
                     backupText.select();
                     document.execCommand('copy');
-                    alert("Texto seleccionado. Si no se copió, hazlo manualmente.");
+                    backupStatus.textContent = 'Texto seleccionado. Si no se copió, hazlo manualmente.';
+                    backupStatus.style.color = '#d6ad60';
                 });
             } else {
                 backupText.select();
                 document.execCommand('copy');
-                alert("Texto seleccionado. Cópialo manualmente.");
+                backupStatus.textContent = 'Texto seleccionado. Cópialo manualmente.';
+                backupStatus.style.color = '#d6ad60';
+            }
+        });
+    }
+
+    // Paste functionality for better Android support
+    if (btnPaste) {
+        btnPaste.addEventListener('click', async () => {
+            try {
+                if (navigator.clipboard && navigator.clipboard.readText) {
+                    const text = await navigator.clipboard.readText();
+                    backupText.value = text;
+                    backupStatus.textContent = '¡Texto pegado correctamente!';
+                    backupStatus.style.color = '#4BC0C0';
+                    // Keep focus on textarea
+                    backupText.focus();
+                } else {
+                    // Fallback: focus the textarea and show instruction
+                    backupText.focus();
+                    backupStatus.textContent = 'El campo está listo. Usa el pegado nativo de tu dispositivo (mantén pulsado y selecciona "Pegar").';
+                    backupStatus.style.color = '#d6ad60';
+                }
+            } catch (err) {
+                console.error('Error al leer el portapapeles:', err);
+                // Fallback: focus the textarea and show instruction
+                backupText.focus();
+                backupStatus.textContent = 'No se pudo acceder al portapapeles automáticamente. Mantén pulsado el campo de texto y selecciona "Pegar".';
+                backupStatus.style.color = '#d6ad60';
             }
         });
     }
@@ -674,7 +711,9 @@ window.addEventListener('DOMContentLoaded', () => {
         try {
             const dataStr = backupText.value.trim();
             if (!dataStr) {
-                alert("Por favor, pega los datos primero.");
+                backupStatus.textContent = 'Por favor, pega los datos primero.';
+                backupStatus.style.color = '#ff6b6b';
+                backupText.focus();
                 return;
             }
 
@@ -682,14 +721,19 @@ window.addEventListener('DOMContentLoaded', () => {
             if (Array.isArray(data)) {
                 if (confirm("Se van a sobrescribir las partidas actuales con las pegadas. ¿Continuar?")) {
                     localStorage.setItem("pocha_history", JSON.stringify(data));
-                    alert("¡Datos restaurados correctamente!");
-                    location.reload();
+                    backupStatus.textContent = '¡Datos restaurados correctamente! Recargando...';
+                    backupStatus.style.color = '#4BC0C0';
+                    setTimeout(() => location.reload(), 500);
                 }
             } else {
-                alert("Error: El formato no es válido (no es una lista).");
+                backupStatus.textContent = 'Error: El formato no es válido (no es una lista).';
+                backupStatus.style.color = '#ff6b6b';
+                backupText.focus();
             }
         } catch (e) {
-            alert("Error: El texto no es un JSON válido. Revisa que lo hayas copiado todo.");
+            backupStatus.textContent = 'Error: El texto no es un JSON válido. Revisa que lo hayas copiado todo.';
+            backupStatus.style.color = '#ff6b6b';
+            backupText.focus();
         }
     });
 
@@ -710,7 +754,9 @@ window.addEventListener('DOMContentLoaded', () => {
         try {
             const dataStr = backupText.value.trim();
             if (!dataStr) {
-                alert("Por favor, pega los datos primero.");
+                backupStatus.textContent = 'Por favor, pega los datos primero.';
+                backupStatus.style.color = '#ff6b6b';
+                backupText.focus();
                 return;
             }
 
@@ -724,19 +770,26 @@ window.addEventListener('DOMContentLoaded', () => {
                 // Verificar si ya existe una partida con el mismo ID
                 const exists = history.some(g => g.id === game.id);
                 if (exists) {
-                    alert("Esta partida ya existe en el historial (mismo ID).");
+                    backupStatus.textContent = 'Esta partida ya existe en el historial (mismo ID).';
+                    backupStatus.style.color = '#d6ad60';
+                    backupText.focus();
                     return;
                 }
 
                 history.push(game);
                 localStorage.setItem("pocha_history", JSON.stringify(history));
-                alert("¡Partida añadida correctamente!");
-                location.reload();
+                backupStatus.textContent = '¡Partida añadida correctamente! Recargando...';
+                backupStatus.style.color = '#4BC0C0';
+                setTimeout(() => location.reload(), 500);
             } else {
-                alert("Error: El formato no es válido. Debe ser un objeto de partida con los campos: id, name, date, players, rounds.");
+                backupStatus.textContent = 'Error: El formato no es válido. Debe ser un objeto de partida con los campos: id, name, date, players, rounds.';
+                backupStatus.style.color = '#ff6b6b';
+                backupText.focus();
             }
         } catch (e) {
-            alert("Error: El texto no es un JSON válido. Revisa que lo hayas copiado todo.");
+            backupStatus.textContent = 'Error: El texto no es un JSON válido. Revisa que lo hayas copiado todo.';
+            backupStatus.style.color = '#ff6b6b';
+            backupText.focus();
         }
     });
 });
