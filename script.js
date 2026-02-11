@@ -758,11 +758,12 @@ function normalizeName(name) {
 
 // Abrir modal de estadísticas de la partida actual
 document.getElementById('open-stats').addEventListener('click', () => {
-    if (gameRoundsHistory.length === 0) {
+    const gameToShow = activeHistoryGame || { rounds: gameRoundsHistory, players: players.map(p => ({ name: p.name, total: p.total })) };
+    if (gameToShow.rounds.length === 0) {
         alert("No hay rondas jugadas aún para mostrar estadísticas.");
         return;
     }
-    showGameStats(activeHistoryGame || { rounds: gameRoundsHistory, players: players.map(p => ({ name: p.name, total: p.total })) });
+    showGameStats(gameToShow);
 });
 
 // Abrir modal de estadísticas globales desde el historial
