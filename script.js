@@ -427,6 +427,7 @@ function setup() {
 
     document.getElementById("next-round").addEventListener("click", saveRound);
     document.getElementById("undo-round").addEventListener("click", undoLastRound);
+    document.getElementById("new-game").addEventListener("click", startNewGame);
     document.getElementById("open-chart").addEventListener("click", showChart);
     document.getElementById("open-history").addEventListener("click", openHistoryModal);
     document.getElementById("close-history").addEventListener("click", () => {
@@ -472,12 +473,18 @@ function resetGame() {
     document.getElementById("next-round").textContent = "Guardar ronda";
     document.getElementById("undo-round").disabled = true;
 
-    // Pedir datos
-    askPlayerNames();
-    askDealer();
+    // No pedir datos al inicio, se hacen desde el botón "Nueva partida"
 
     updateDisplay();
     updateCurrentRoundHeader();
+}
+
+function startNewGame() {
+    if (confirm("¿Comenzar nueva partida?")) {
+        resetGame();
+        askPlayerNames();
+        askDealer();
+    }
 }
 
 function getIndex(element) {
